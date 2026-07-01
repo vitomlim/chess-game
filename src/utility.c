@@ -1,8 +1,71 @@
+#include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "utility.h"
 
-#include "types.h"
-#include "moves.h"
+void push(Stack *pStack, uint64_t value) {
+  pStack->data[++pStack->top] = value;
+}
+
+void pop(Stack *pStack) {
+  pStack->top--;
+}
+
+void initializeBoard(BoardState *boardState, char* FENString) {
+
+  // first field: pieces position
+  int x = 0, y = 0;
+  while(*FENString && *FENString != ' ') {
+    char currentChar = *FENString++;
+
+    if('1' <= currentChar && currentChar <= '8') {
+      x += currentChar - '0';
+      continue;
+    }
+
+    if(currentChar == '/') {
+      y++;
+      x = 0;
+      continue;
+    }
+
+    uint64_t currentBit = (uint64_t)1 << (x + 8*y);
+    if(currentChar == 'r')      boardState->pieces[bRooks] |= currentBit;
+    else if(currentChar == 'n') boardState->pieces[bKnights] |= currentBit;
+    else if(currentChar == 'b') boardState->pieces[bBishops] |= currentBit;
+    else if(currentChar == 'q') boardState->pieces[bQueens] |= currentBit;
+    else if(currentChar == 'k') boardState->pieces[bKing] |= currentBit;
+    else if(currentChar == 'p') boardState->pieces[bPawns] |= currentBit;
+    else if(currentChar == 'R') boardState->pieces[wRooks] |= currentBit;
+    else if(currentChar == 'N') boardState->pieces[wKnights] |= currentBit;
+    else if(currentChar == 'B') boardState->pieces[wBishops] |= currentBit;
+    else if(currentChar == 'Q') boardState->pieces[wQueens] |= currentBit;
+    else if(currentChar == 'K') boardState->pieces[wKing] |= currentBit;
+    else if(currentChar == 'P') boardState->pieces[wPawns] |= currentBit;
+    x++;
+  }
+  FENString++;
+
+  boardState->blackPieces = boardState->pieces[bRooks] | boardState->pieces[bKnights] | boardState->pieces[bBishops] | boardState->pieces[bQueens] | boardState->pieces[bKing] | boardState->pieces[bPawns];
+  boardState->whitePieces = boardState->pieces[wRooks] | boardState->pieces[wKnights] | boardState->pieces[wBishops] | boardState->pieces[wQueens] | boardState->pieces[wKing] | boardState->pieces[wPawns];
+
+
+  // second field: current turn
+  boardState->isWhiteTurn = (*FENString++ == 'w');
+
+  // third field: castling rights
+  boardState->castlingRights[bKingSide] = strchr(FENString, 'k') != NULL;
+  boardState->castlingRights[bQueenSide] = strchr(FENString, 'q') != NULL;
+  boardState->castlingRights[wKingSide] = strchr(FENString, 'K') != NULL;
+  boardState->castlingRights[wQueenSide] = strchr(FENString, 'Q') != NULL;
+
+  // fourth field: enpassant targets
+
+  // fifth field: number of half moves
+
+  // sixth field: number of full moves
+
+}
 
 void initializePieceMaps(uint64_t rookMaps[64][4], uint64_t bishopMaps[64][4], uint64_t knightMaps[64], uint64_t kingMaps[64], uint64_t pawnMaps[64][4]) {
   for(int i = 0; i < 64; i++) {
